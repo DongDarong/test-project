@@ -175,6 +175,11 @@
             <h2 class="text-xs font-bold text-gray-400 uppercase tracking-wider">Management</h2>
           </div>
 
+          <a class="flex items-center gap-3 py-2.5 px-4 rounded-lg text-gray-600 hover:bg-gray-50 hover:text-hope-dark transition-colors group" href="/admin/admin-performance.html">
+                        <svg class="w-5 h-5 group-hover:text-hope-cyan transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>
+                        Performance
+                    </a>
+
           <a class="flex items-center gap-3 py-2.5 px-4 rounded-lg text-gray-600 hover:bg-gray-50 hover:text-hope-dark transition-colors group" href="/admin/admin-inventory.html">
             <svg class="w-5 h-5 group-hover:text-hope-lime transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path></svg>
             Inventory
@@ -310,7 +315,6 @@
           </table>
         </div>
       </div>
-
     </main>
 
   </div>
@@ -435,6 +439,60 @@
         closeModal();
       }
     });
+
+    // ===== Training Page: Client-side Pagination =====
+    (function setupTrainingPagination(){
+      const tbody = document.querySelector('table tbody');
+      if (!tbody) return;
+      const rows = Array.from(tbody.querySelectorAll('tr'));
+      const rowsPerPage = 10;
+      const totalItems = rows.length;
+      const totalPages = Math.max(1, Math.ceil(totalItems / rowsPerPage));
+      const startItemEl = document.getElementById('startItem');
+      const endItemEl = document.getElementById('endItem');
+      const totalItemsEl = document.getElementById('totalItems');
+      const prevBtn = document.getElementById('prevPage');
+      const nextBtn = document.getElementById('nextPage');
+      const pageButtons = document.getElementById('pageButtons');
+
+      totalItemsEl && (totalItemsEl.textContent = String(totalItems));
+
+      function renderPage(page){
+        if (page < 1) page = 1;
+        if (page > totalPages) page = totalPages;
+        window.__trainingCurrentPage = page;
+        const start = (page - 1) * rowsPerPage;
+        const end = Math.min(start + rowsPerPage, totalItems);
+
+        rows.forEach((r, i) => r.style.display = (i >= start && i < end) ? '' : 'none');
+
+        if (startItemEl) startItemEl.textContent = totalItems === 0 ? '0' : String(start + 1);
+        if (endItemEl) endItemEl.textContent = String(end);
+
+        // render page buttons
+        if (!pageButtons) return;
+        pageButtons.innerHTML = '';
+        for (let p = 1; p <= totalPages; p++){
+          const btn = document.createElement('button');
+          btn.textContent = String(p);
+          btn.className = p === page ? 'px-3 py-1 bg-hope-red text-white rounded-md text-sm' : 'px-3 py-1 bg-white border border-gray-200 rounded-md text-sm text-gray-600 hover:bg-gray-50';
+          btn.addEventListener('click', ()=> renderPage(p));
+          pageButtons.appendChild(btn);
+        }
+
+        prevBtn && (prevBtn.disabled = page === 1);
+        nextBtn && (nextBtn.disabled = page === totalPages);
+      }
+
+      prevBtn && prevBtn.addEventListener('click', ()=> renderPage((window.__trainingCurrentPage||1)-1));
+      nextBtn && nextBtn.addEventListener('click', ()=> renderPage((window.__trainingCurrentPage||1)+1));
+
+      // expose function
+      window.changeTrainingPage = function(p){ renderPage(p); };
+
+      // initial render
+      renderPage(1);
+    })();
   </script>
 
 </body>

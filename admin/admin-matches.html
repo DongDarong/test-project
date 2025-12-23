@@ -184,6 +184,11 @@
                         <h2 class="text-xs font-bold text-gray-400 uppercase tracking-wider">Management</h2>
                     </div>
 
+                    <a class="flex items-center gap-3 py-2.5 px-4 rounded-lg text-gray-600 hover:bg-gray-50 hover:text-hope-dark transition-colors group" href="/admin/admin-performance.html">
+                        <svg class="w-5 h-5 group-hover:text-hope-cyan transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>
+                        Performance
+                    </a>
+
                     <a class="flex items-center gap-3 py-2.5 px-4 rounded-lg text-gray-600 hover:bg-gray-50 hover:text-hope-dark transition-colors group" href="/admin/admin-inventory.html">
                         <svg class="w-5 h-5 group-hover:text-hope-lime transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path></svg>
                         Inventory
@@ -328,21 +333,12 @@
                 </div>
 
                 <!-- Pagination -->
-                <div class="bg-white px-4 py-3 border-t border-gray-100 flex items-center justify-between sm:px-6">
-                    <div class="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
-                        <p class="text-xs font-bold text-gray-400 uppercase tracking-widest">
-                            Page <span class="text-hope-dark">1</span> of 5
-                        </p>
-                        <nav class="inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination">
-                            <button class="relative inline-flex items-center px-3 py-2 rounded-l-md border border-gray-200 bg-white text-gray-500 hover:bg-gray-50 transition-colors">
-                                <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
-                            </button>
-                            <button class="relative inline-flex items-center px-4 py-2 border border-gray-200 bg-hope-cyan text-white text-xs font-bold transition-colors">1</button>
-                            <button class="relative inline-flex items-center px-4 py-2 border border-gray-200 bg-white text-gray-700 hover:bg-gray-50 text-xs font-bold transition-colors">2</button>
-                            <button class="relative inline-flex items-center px-3 py-2 rounded-r-md border border-gray-200 bg-white text-gray-500 hover:bg-gray-50 transition-colors">
-                                <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
-                            </button>
-                        </nav>
+                <div class="bg-white px-4 py-3 border-t border-gray-100 flex flex-col md:flex-row items-center justify-between sm:px-6 text-sm text-gray-500">
+                    <div id="paginationInfo">Page <span id="currentPage">1</span> of <span id="totalPages">1</span></div>
+                    <div id="paginationControls" class="flex items-center gap-2 mt-3 md:mt-0">
+                        <button id="prevPage" onclick="changeMatchesPage((window.__matchesCurrentPage||1)-1)" class="px-3 py-1 rounded-md bg-white border border-gray-200 text-gray-700 disabled:opacity-50">Prev</button>
+                        <div id="pageButtons" class="flex items-center gap-1"></div>
+                        <button id="nextPage" onclick="changeMatchesPage((window.__matchesCurrentPage||1)+1)" class="px-3 py-1 rounded-md bg-white border border-gray-200 text-gray-700 disabled:opacity-50">Next</button>
                     </div>
                 </div>
             </div>
@@ -459,6 +455,60 @@
                 closeModal();
             }
         });
+
+        // Simple client-side pagination for Matches table
+        (function () {
+            const rowsPerPage = 10;
+            let currentPage = 1;
+            const tableBody = document.querySelector('table tbody');
+            const pageInfo = document.getElementById('paginationInfo');
+            const pageButtons = document.getElementById('pageButtons');
+            const prevBtn = document.getElementById('prevPage');
+            const nextBtn = document.getElementById('nextPage');
+            const currentPageEl = document.getElementById('currentPage');
+            const totalPagesEl = document.getElementById('totalPages');
+
+            if (!tableBody || !pageInfo || !pageButtons) return;
+
+            const rows = Array.from(tableBody.querySelectorAll('tr'));
+            const totalItems = rows.length;
+
+            function render() {
+                const totalPages = Math.max(1, Math.ceil(totalItems / rowsPerPage));
+                if (currentPage > totalPages) currentPage = totalPages;
+                window.__matchesCurrentPage = currentPage;
+
+                const start = (currentPage - 1) * rowsPerPage;
+                const end = Math.min(start + rowsPerPage, totalItems);
+
+                rows.forEach((r, i) => r.style.display = (i >= start && i < end) ? '' : 'none');
+
+                if (currentPageEl) currentPageEl.textContent = currentPage;
+                if (totalPagesEl) totalPagesEl.textContent = totalPages;
+
+                // render page buttons
+                pageButtons.innerHTML = '';
+                for (let i = 1; i <= totalPages; i++) {
+                    const btn = document.createElement('button');
+                    btn.type = 'button';
+                    btn.textContent = i;
+                    btn.className = 'px-3 py-1 rounded-md text-sm font-medium ' + (i === currentPage ? 'bg-hope-cyan text-white' : 'bg-white border border-gray-200 text-gray-700');
+                    btn.addEventListener('click', () => { currentPage = i; render(); });
+                    pageButtons.appendChild(btn);
+                }
+
+                if (prevBtn) prevBtn.disabled = currentPage === 1;
+                if (nextBtn) nextBtn.disabled = currentPage === totalPages;
+            }
+
+            window.changeMatchesPage = function (n) {
+                const totalPages = Math.max(1, Math.ceil(totalItems / rowsPerPage));
+                currentPage = Math.max(1, Math.min(n, totalPages));
+                render();
+            };
+
+            render();
+        })();
     </script>
 
 </body>

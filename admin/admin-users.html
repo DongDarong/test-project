@@ -185,6 +185,11 @@
                         <h2 class="text-xs font-bold text-gray-400 uppercase tracking-wider">Management</h2>
                     </div>
 
+                    <a class="flex items-center gap-3 py-2.5 px-4 rounded-lg text-gray-600 hover:bg-gray-50 hover:text-hope-dark transition-colors group" href="/admin/admin-performance.html">
+                        <svg class="w-5 h-5 group-hover:text-hope-cyan transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>
+                        Performance
+                    </a>
+
                     <a class="flex items-center gap-3 py-2.5 px-4 rounded-lg text-gray-600 hover:bg-gray-50 hover:text-hope-dark transition-colors group" href="/admin/admin-inventory.html">
                         <svg class="w-5 h-5 group-hover:text-hope-lime transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path></svg>
                         Inventory
@@ -327,9 +332,14 @@
                     </table>
                 </div>
 
-                <!-- Pagination Placeholder -->
-                <div class="p-4 md:p-5 border-t border-gray-100 bg-gray-50 text-center text-sm text-gray-500">
-                    Showing 1 to 3 of 58 Users.
+                <!-- Pagination -->
+                <div class="p-4 md:p-5 border-t border-gray-100 bg-gray-50 flex flex-col md:flex-row items-center justify-between gap-3 text-sm text-gray-500">
+                    <div id="paginationInfo">Showing 1 to 3 of 58 Users.</div>
+                    <div id="paginationControls" class="flex items-center gap-2">
+                        <button id="prevPage" onclick="changePage((window.__usersCurrentPage||1)-1)" class="px-3 py-1 rounded-md bg-white border border-gray-200 text-gray-700 disabled:opacity-50" aria-label="Previous">Prev</button>
+                        <div id="pageButtons" class="flex items-center gap-1"></div>
+                        <button id="nextPage" onclick="changePage((window.__usersCurrentPage||1)+1)" class="px-3 py-1 rounded-md bg-white border border-gray-200 text-gray-700 disabled:opacity-50" aria-label="Next">Next</button>
+                    </div>
                 </div>
             </div>
 
@@ -366,7 +376,21 @@
 
                 <!-- Modal Body (Styled Form) -->
                 <div class="bg-white px-4 py-5 sm:p-6 space-y-5">
-                    
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Profile Image</label>
+                        <div class="flex items-center gap-4">
+                            <div class="w-16 h-16 bg-gray-100 rounded-full overflow-hidden flex items-center justify-center">
+                                <img id="userImagePreview" src="" alt="Preview" class="w-full h-full object-cover hidden">
+                                <span id="userImagePlaceholder" class="text-xs text-gray-400">No image</span>
+                            </div>
+                            <div class="flex-1">
+                                <input id="userImageInput" type="file" accept="image/*" class="w-full rounded-xl border-gray-300 border p-2.5 text-gray-900 sm:text-sm outline-none" />
+                                <p class="text-xs text-gray-400 mt-1">Optional. JPG or PNG. Max 2MB.</p>
+                            </div>
+                        </div>
+                    </div>
+
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-1">Full Name</label>
                         <input type="text" placeholder="e.g. Sok Dara" class="w-full rounded-xl border-gray-300 border p-2.5 text-gray-900 focus:border-hope-cyan focus:ring-hope-cyan sm:text-sm shadow-sm outline-none transition-shadow">
@@ -467,6 +491,84 @@
                 closeModal();
             }
         });
+
+        // Simple client-side pagination for Users table
+        (function () {
+            const rowsPerPage = 10;
+            let currentPage = 1;
+            const tableBody = document.querySelector('table tbody');
+            const pageInfo = document.getElementById('paginationInfo');
+            const pageButtons = document.getElementById('pageButtons');
+            const prevBtn = document.getElementById('prevPage');
+            const nextBtn = document.getElementById('nextPage');
+
+            if (!tableBody || !pageInfo || !pageButtons) return;
+
+            const rows = Array.from(tableBody.querySelectorAll('tr'));
+            const totalItems = rows.length;
+
+            function render() {
+                const totalPages = Math.max(1, Math.ceil(totalItems / rowsPerPage));
+                if (currentPage > totalPages) currentPage = totalPages;
+                window.__usersCurrentPage = currentPage;
+
+                const start = (currentPage - 1) * rowsPerPage;
+                const end = Math.min(start + rowsPerPage, totalItems);
+
+                rows.forEach((r, i) => r.style.display = (i >= start && i < end) ? '' : 'none');
+
+                pageInfo.textContent = totalItems === 0 ? 'No users to display.' : `Showing ${totalItems === 0 ? 0 : start + 1} to ${end} of ${totalItems} Users.`;
+
+                // render page buttons
+                pageButtons.innerHTML = '';
+                for (let i = 1; i <= totalPages; i++) {
+                    const btn = document.createElement('button');
+                    btn.type = 'button';
+                    btn.textContent = i;
+                    btn.className = 'px-3 py-1 rounded-md text-sm font-medium ' + (i === currentPage ? 'bg-hope-cyan text-white' : 'bg-white border border-gray-200 text-gray-700');
+                    btn.addEventListener('click', () => { currentPage = i; render(); });
+                    pageButtons.appendChild(btn);
+                }
+
+                if (prevBtn) prevBtn.disabled = currentPage === 1;
+                if (nextBtn) nextBtn.disabled = currentPage === totalPages;
+            }
+
+            window.changePage = function (n) {
+                const totalPages = Math.max(1, Math.ceil(totalItems / rowsPerPage));
+                currentPage = Math.max(1, Math.min(n, totalPages));
+                render();
+            };
+
+            render();
+        })();
+
+        // Profile image preview for Add User modal
+        (function () {
+            const input = document.getElementById('userImageInput');
+            const preview = document.getElementById('userImagePreview');
+            const placeholder = document.getElementById('userImagePlaceholder');
+
+            if (!input) return;
+
+            input.addEventListener('change', function () {
+                const file = this.files && this.files[0];
+                if (!file) {
+                    preview.src = '';
+                    preview.classList.add('hidden');
+                    placeholder.classList.remove('hidden');
+                    return;
+                }
+
+                const reader = new FileReader();
+                reader.onload = function (e) {
+                    preview.src = e.target.result;
+                    preview.classList.remove('hidden');
+                    placeholder.classList.add('hidden');
+                };
+                reader.readAsDataURL(file);
+            });
+        })();
     </script>
 
 </body>
